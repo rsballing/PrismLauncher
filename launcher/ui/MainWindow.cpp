@@ -186,7 +186,6 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
 
         ui->instanceToolBar->setVisibilityState(QByteArray::fromBase64(instanceToolbarSetting->get().toString().toUtf8()));
 
-        ui->instanceToolBar->addContextMenuAction(ui->newsToolBar->toggleViewAction());
         ui->instanceToolBar->addContextMenuAction(ui->instanceToolBar->toggleViewAction());
         ui->instanceToolBar->addContextMenuAction(ui->actionToggleStatusBar);
         ui->instanceToolBar->addContextMenuAction(ui->actionLockToolbars);
@@ -220,6 +219,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
         ui->actionMATRIX->setVisible(!BuildConfig.MATRIX_URL.isEmpty());
         ui->actionDISCORD->setVisible(!BuildConfig.DISCORD_URL.isEmpty());
         ui->actionREDDIT->setVisible(!BuildConfig.SUBREDDIT_URL.isEmpty());
+        ui->actionMoreNews->setVisible(!BuildConfig.NEWS_RSS_URL.isEmpty());
 
         ui->actionCheckUpdate->setVisible(APPLICATION->updaterEnabled());
 
@@ -247,7 +247,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     // add the toolbar toggles to the view menu
     ui->viewMenu->addAction(ui->instanceToolBar->toggleViewAction());
-    ui->viewMenu->addAction(ui->newsToolBar->toggleViewAction());
+    ui->newsToolBar->setVisible(false);
+    ui->newsToolBar->toggleViewAction()->setVisible(false);
 
     updateThemeMenu();
     updateMainToolBar();
@@ -275,8 +276,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
         connect(secretEventFilter, &KonamiCode::triggered, this, &MainWindow::konamiTriggered);
     }
 
-    // Add the news label to the news toolbar.
-    {
+    // Add the news label only when a news feed is configured.
+    if (!BuildConfig.NEWS_RSS_URL.isEmpty()) {
         m_newsChecker.reset(new NewsChecker(APPLICATION->network(), BuildConfig.NEWS_RSS_URL));
         newsLabel = new QToolButton();
         newsLabel->setIcon(QIcon::fromTheme("news"));
@@ -406,8 +407,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
     // TODO: refresh accounts here?
     // auto accounts = APPLICATION->accounts();
 
-    // load the news
-    {
+    // Load news only when a feed is configured.
+    if (m_newsChecker) {
         m_newsChecker->reloadNews();
         updateNewsLabel();
     }
